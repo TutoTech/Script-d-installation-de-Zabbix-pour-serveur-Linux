@@ -18,7 +18,7 @@ Les deux suivent strictement la [documentation officielle Zabbix](https://www.za
 
 ### ⭐ Nouveau script TUI : `install-zabbix-tui.sh`
 
-Une interface en mode texte (whiptail) vous guide pas à pas, **sans rien modifier avant votre confirmation finale** :
+Une interface en mode texte (whiptail) vous guide pas à pas : **l'installation ne commence qu'après votre confirmation finale** (seuls le fichier journal et, si absents, les outils `whiptail`/`wget` sont mis en place avant) :
 
 1. **Détection automatique** : version de Debian (12/13), architecture (amd64/arm64), connectivité vers le dépôt Zabbix.
 2. **Choix de l'agent** : **Zabbix Agent 2** (Go, plugins MongoDB/MSSQL/PostgreSQL — présélectionné sur Debian 13) ou agent classique (C), avec explication des différences.
@@ -77,7 +77,7 @@ Both strictly follow the [official Zabbix documentation](https://www.zabbix.com/
 
 ### ⭐ New TUI script: `install-zabbix-tui.sh`
 
-A text-mode interface (whiptail) guides you step by step and **changes nothing before your final confirmation**:
+A text-mode interface (whiptail) guides you step by step: **the installation only starts after your final confirmation** (only the log file and, if missing, the `whiptail`/`wget` tools are set up beforehand):
 
 1. **Auto-detection**: Debian version (12/13), architecture (amd64/arm64), connectivity to the Zabbix repository.
 2. **Agent choice**: **Zabbix Agent 2** (Go, MongoDB/MSSQL/PostgreSQL plugins — preselected on Debian 13) or the classic C agent, with an explanation of the differences.

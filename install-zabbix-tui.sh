@@ -124,7 +124,9 @@ trap cleanup EXIT
 abort_by_user() {
     trap - ERR
     echo ""
-    warn "Installation annulée par l'utilisateur. Aucune modification supplémentaire n'a été faite."
+    warn "Installation annulée par l'utilisateur : le script s'arrête ici."
+    warn "Les étapes déjà réalisées (le cas échéant) restent en place ;"
+    warn "le détail de ce qui a été fait se trouve dans : ${LOG_FILE}"
     cleanup
     exit 1
 }
@@ -231,14 +233,19 @@ preflight_checks() {
     touch "$LOG_FILE" && chmod 600 "$LOG_FILE"
     log "Journal d'installation : ${LOG_FILE}"
 
-    # ── whiptail ─────────────────────────────────────────────────────────────
-    # Installé avant tout le reste : certains écrans de secours (choix de la
-    # version de Debian) peuvent en avoir besoin dès la détection du système.
-    # whiptail est normalement présent de base sur Debian (dépendance de debconf).
-    if ! command -v whiptail >/dev/null 2>&1; then
-        log "Installation de whiptail (interface de dialogues)..."
+    # ── Outils indispensables au script lui-même ─────────────────────────────
+    # whiptail (dialogues) et wget (téléchargements) sont normalement présents
+    # de base sur Debian, mais peuvent manquer sur une installation minimale :
+    # on les installe ici plutôt que d'échouer plus loin avec un message
+    # cryptique « command not found ». C'est la SEULE modification du système
+    # faite avant l'écran de confirmation (avec la création du journal).
+    local missing_tools=()
+    command -v whiptail >/dev/null 2>&1 || missing_tools+=(whiptail)
+    command -v wget     >/dev/null 2>&1 || missing_tools+=(wget)
+    if (( ${#missing_tools[@]} > 0 )); then
+        log "Installation des outils requis par le script : ${missing_tools[*]}..."
         run_logged apt-get update
-        run_logged apt-get install -y whiptail
+        run_logged apt-get install -y "${missing_tools[@]}"
     fi
 
     # ── Détection de la version de Debian ────────────────────────────────────
@@ -317,8 +324,10 @@ tui_collect_settings() {
 
 La procédure suit la documentation officielle Zabbix.
 
-RIEN ne sera modifié avant l'écran de récapitulatif final :
-vous pourrez annuler à tout moment avec < Annuler > ou Échap."
+L'INSTALLATION ne commencera qu'après l'écran de récapitulatif
+final : vous pourrez annuler à tout moment avec < Annuler > ou
+Échap. (Seuls le journal ${LOG_FILE}
+et, si nécessaire, les outils whiptail/wget existent déjà.)"
 
     # ── Choix de l'agent ─────────────────────────────────────────────────────
     # Pédagogie : Agent 2 est le choix moderne ; le classique reste utile si
@@ -590,16 +599,28 @@ import_schema() {
     # log_bin_trust_function_creators : le schéma Zabbix crée des fonctions
     # stockées ; si la journalisation binaire est active, MariaDB exige ce
     # réglage temporaire pour autoriser leur création (procédure officielle).
-    log "Activation temporaire de log_bin_trust_function_creators..."
+    # On mémorise la valeur ACTUELLE pour la restaurer à l'identique après
+    # l'import — y compris si l'import échoue, afin de ne jamais laisser le
+    # serveur avec ce réglage de sécurité assoupli.
+    local previous_trust import_ok="oui"
+    previous_trust=$(mysql_root -e "SELECT @@GLOBAL.log_bin_trust_function_creators;")
+    log "Activation temporaire de log_bin_trust_function_creators (valeur actuelle : ${previous_trust})..."
     mysql_root -e "SET GLOBAL log_bin_trust_function_creators = 1;" >>"$LOG_FILE" 2>&1
 
     log "Import du schéma initial Zabbix (~170 tables)."
     log "PATIENCE : cette étape peut durer plusieurs minutes, c'est normal."
-    zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | \
-        mysql_zabbix --default-character-set=utf8mb4 zabbix >>"$LOG_FILE" 2>&1
+    if ! zcat /usr/share/zabbix-sql-scripts/mysql/server.sql.gz | \
+        mysql_zabbix --default-character-set=utf8mb4 zabbix >>"$LOG_FILE" 2>&1; then
+        import_ok="non"
+    fi
 
-    log "Désactivation de log_bin_trust_function_creators (on referme la porte)..."
-    mysql_root -e "SET GLOBAL log_bin_trust_function_creators = 0;" >>"$LOG_FILE" 2>&1
+    log "Restauration de log_bin_trust_function_creators à sa valeur d'origine (${previous_trust})..."
+    mysql_root -e "SET GLOBAL log_bin_trust_function_creators = ${previous_trust};" >>"$LOG_FILE" 2>&1
+
+    if [[ "$import_ok" == "non" ]]; then
+        error "L'import du schéma a échoué. Détails dans ${LOG_FILE}."
+        exit 1
+    fi
 
     # Vérification : l'import a-t-il vraiment créé les tables ?
     # (Un import silencieusement tronqué est un grand classique de dépannage.)
