@@ -36,6 +36,18 @@ Une interface en mode texte (whiptail) vous guide pas à pas : **l'installation 
 
 ### 🚀 Utilisation
 
+#### En une seule commande (recommandé)
+
+Télécharge le script, le rend exécutable, le lance, puis le supprime automatiquement :
+
+```bash
+wget -O install-zabbix-tui.sh https://raw.githubusercontent.com/TutoTech/Script-d-installation-de-Zabbix-pour-serveur-Linux/main/install-zabbix-tui.sh && chmod +x install-zabbix-tui.sh && sudo ./install-zabbix-tui.sh; rm -f install-zabbix-tui.sh
+```
+
+> 💡 Le `;` avant `rm` garantit que le fichier téléchargé est supprimé même si vous annulez l'installation.
+
+#### Étape par étape
+
 ```bash
 chmod +x install-zabbix-tui.sh
 sudo ./install-zabbix-tui.sh
@@ -94,6 +106,18 @@ A text-mode interface (whiptail) guides you step by step: **the installation onl
 * Internet access to `repo.zabbix.com` and the Debian repositories.
 
 ### 🚀 Usage
+
+#### One-liner (recommended)
+
+Downloads the script, makes it executable, runs it, then deletes it automatically:
+
+```bash
+wget -O install-zabbix-tui.sh https://raw.githubusercontent.com/TutoTech/Script-d-installation-de-Zabbix-pour-serveur-Linux/main/install-zabbix-tui.sh && chmod +x install-zabbix-tui.sh && sudo ./install-zabbix-tui.sh; rm -f install-zabbix-tui.sh
+```
+
+> 💡 The `;` before `rm` ensures the downloaded file is removed even if you cancel the installation.
+
+#### Step by step
 
 ```bash
 chmod +x install-zabbix-tui.sh
