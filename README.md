@@ -18,6 +18,8 @@ Les deux suivent strictement la [documentation officielle Zabbix](https://www.za
 
 ### ⭐ Nouveau script TUI : `install-zabbix-tui.sh`
 
+![Démo du script Zabbix](./demo-script-install-zabbix.gif)
+
 Une interface en mode texte (whiptail) vous guide pas à pas : **l'installation ne commence qu'après votre confirmation finale** (seuls le fichier journal et, si absents, les outils `whiptail`/`wget` sont mis en place avant) :
 
 1. **Détection automatique** : version de Debian (12/13), architecture (amd64/arm64), connectivité vers le dépôt Zabbix.
